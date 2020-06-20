@@ -1,5 +1,6 @@
 #include <string>
-#include <strings.h>
+#include <string.h>
+#include <queue>
 #include "vetorord.hpp"
 using namespace std;
 
@@ -20,6 +21,7 @@ private:
     int c[10000];
     bool checaAresta(int i, int j);
     void marcaVisitado(int i, int valor);
+    bool checaFilhos(int pai, int procurado, queue<int> *fila, bool* jaFoi);
 
 public:
     Grafo(int k, string nomeArquivo)
@@ -54,6 +56,11 @@ public:
                 if (matrizAdj[i][j])
                     numArestas++;
             }
+        }
+
+        for (i = 0; i < 10000; i++)
+        {
+            c[i] = -1;
         }
     }
 
@@ -124,7 +131,7 @@ public:
         /* Retorna o número de componentes do grafo */
         int i, j;
         int num = 0;
-        for (i = 0; i < 10000; i++)
+        for (i = 0; i < numPalavras; i++)
         {
             c[i] = -1;
         }
@@ -142,18 +149,76 @@ public:
     bool conexo()
     {
         /* Retorna se o grafo é ou não conexo */
+        return componentes() == 1;
     }
 
     int tamComp(string palavra)
     {
         /* Retorna o tamanha da componente conexa onde está a palavra
         ou -1 caso ela não se encontre no grafo */
+        int valor;
+        String test = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(test, palavra.c_str());
+        valor = *tabela->devolve(test);
+        if(valor == -1) return -1;
+        else
+        {
+            /*calcula tamanho da comp*/
+            /*TODO*/
+        }
+        free(test);
     }
 
     int dist(string a, string b)
     {
         /* Retorna a menor distância entre as palavras a e b ou -1
         caso elas estejam desconexas ou não estejam no grafo */
+        int i1, i2;
+        String aux1 = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(aux1, a.c_str());
+        i1 = tabela->rank(aux1);
+        if(i1 == -1) return -1;
+
+        String aux2 = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(aux2, b.c_str());
+        i2 = tabela->rank(aux2);
+        if(i2 == -1) return -1;
+        if(matrizAdj[i1][i2]) return 1;
+        /*A distancia sera calculada realizando uma busca em largura*/
+        /*Utilizarei uma fila para marcar o proximo indice a ser procurado*/
+        int dist = 1;
+        queue<int> *fila = new queue<int>;
+        bool acabou = false;
+        bool jaFoi[numPalavras];
+        for(int i=0;i<numPalavras;i++)
+        {
+            jaFoi[i] = false;
+        }
+        int iatual = i1;
+        checaFilhos(iatual, i2, fila, jaFoi);
+        while(!acabou)
+        {
+            fila->push(-1);
+            dist++;
+            while((iatual = fila->front()) != -1)
+            {
+                fila->pop();
+                if(checaFilhos(iatual, i2, fila, jaFoi)) acabou = true;
+            }
+            fila->pop();
+            if(fila->empty()) 
+            {
+                acabou = true;
+                dist = -1;
+            }
+        }
+
+        free(aux1);
+        free(aux2);
+        while(!fila->empty()) fila->pop();
+        delete fila;
+
+        return dist;
     }
 
     bool emCiclo(string a)
@@ -209,6 +274,17 @@ void Grafo::marcaVisitado(int i, int valor)
     }
 }
 
+bool Grafo::checaFilhos(int pai, int procurado, queue<int> *fila, bool* jaFoi)
+{
+    if(matrizAdj[pai][procurado]) return true;
+    jaFoi[pai] = true;
+    for(int  i = 0; i<numPalavras;i++)
+    {
+        if(matrizAdj[pai][i] && !jaFoi[i]) fila->push(i);
+    }
+    return false;
+}
+
 bool checaSemLetraI(string primeira, string segunda, int i)
 {
     /*Checa se a string primeira eh igual à string segunda caso removamos da segunda a letra de indice i*/
@@ -232,6 +308,7 @@ bool checaTrocaLetras(string a, string b, int tamanho)
     a.copy(a2, tamanho);
     b.copy(b2, tamanho);
     char aux;
+    int ajuda;
     /*Testa cada possibilidade*/
     for (int i = 0; i < tamanho; i++)
     {
@@ -242,7 +319,12 @@ bool checaTrocaLetras(string a, string b, int tamanho)
             a2[i] = a2[j];
             a2[j] = aux;
             /*Se for igual, existe essa aresta por esse criterio*/
-            if (strcasecmp(a2, b2) == 0)
+            ajuda = 0;
+            for(int k =0; k<tamanho;k++)
+            {
+                if(a2[k] != b2[k]) ajuda = -1;
+            }
+            if (ajuda == 0)
                 return true;
             /*Se nao, desfaz troca para proxima comparacao*/
             else
