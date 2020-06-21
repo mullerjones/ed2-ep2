@@ -21,7 +21,8 @@ private:
     int c[10000];
     bool checaAresta(int i, int j);
     void marcaVisitado(int i, int valor);
-    bool checaFilhos(int pai, int procurado, queue<int> *fila, bool* jaFoi);
+    bool checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi);
+    bool procuraNosFilhos(int atual, int procurado, bool *visitados);
 
 public:
     Grafo(int k, string nomeArquivo)
@@ -160,7 +161,8 @@ public:
         String test = (String)malloc(40 * sizeof(char) + 5);
         strcpy(test, palavra.c_str());
         valor = *tabela->devolve(test);
-        if(valor == -1) return -1;
+        if (valor == -1)
+            return -1;
         else
         {
             /*calcula tamanho da comp*/
@@ -177,36 +179,40 @@ public:
         String aux1 = (String)malloc(40 * sizeof(char) + 5);
         strcpy(aux1, a.c_str());
         i1 = tabela->rank(aux1);
-        if(i1 == -1) return -1;
+        if (i1 == -1)
+            return -1;
 
         String aux2 = (String)malloc(40 * sizeof(char) + 5);
         strcpy(aux2, b.c_str());
         i2 = tabela->rank(aux2);
-        if(i2 == -1) return -1;
-        if(matrizAdj[i1][i2]) return 1;
+        if (i2 == -1)
+            return -1;
+        if (matrizAdj[i1][i2])
+            return 1;
         /*A distancia sera calculada realizando uma busca em largura*/
         /*Utilizarei uma fila para marcar o proximo indice a ser procurado*/
         int dist = 1;
         queue<int> *fila = new queue<int>;
         bool acabou = false;
         bool jaFoi[numPalavras];
-        for(int i=0;i<numPalavras;i++)
+        for (int i = 0; i < numPalavras; i++)
         {
             jaFoi[i] = false;
         }
         int iatual = i1;
         checaFilhos(iatual, i2, fila, jaFoi);
-        while(!acabou)
+        while (!acabou)
         {
             fila->push(-1);
             dist++;
-            while((iatual = fila->front()) != -1)
+            while ((iatual = fila->front()) != -1)
             {
                 fila->pop();
-                if(checaFilhos(iatual, i2, fila, jaFoi)) acabou = true;
+                if (checaFilhos(iatual, i2, fila, jaFoi))
+                    acabou = true;
             }
             fila->pop();
-            if(fila->empty()) 
+            if (fila->empty())
             {
                 acabou = true;
                 dist = -1;
@@ -215,7 +221,8 @@ public:
 
         free(aux1);
         free(aux2);
-        while(!fila->empty()) fila->pop();
+        while (!fila->empty())
+            fila->pop();
         delete fila;
 
         return dist;
@@ -225,6 +232,40 @@ public:
     {
         /* Retorna verdadeiro casa a palavra esteja em algum ciclo,
         falso caso contrário */
+        String aux = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(aux, a.c_str());
+        int index = tabela->rank(aux);
+        free(aux);
+
+        bool jaVisitou[numPalavras];
+        for (int i = 0; i < numPalavras; i++)
+        {
+            jaVisitou[i] = false;
+        }
+        bool achou = false;
+        for (int i = 0; !achou && i < numPalavras; i++)
+        {
+            if (i != index && matrizAdj[index][i])
+            {
+                jaVisitou[i] = true;
+                for (int j = 0; !achou && j < numPalavras; j++)
+                {
+                    if (matrizAdj[i][j])
+                    {
+                        achou = procuraNosFilhos(j, index, jaVisitou);
+                    }
+                }
+                if (!achou)
+                {
+                    for (int j = 0; j < numPalavras; j++)
+                    {
+                        jaVisitou[j] = false;
+                    }
+                }
+            }
+        }
+
+        return achou;
     }
 
     bool emCiclo(string a, string b)
@@ -274,15 +315,34 @@ void Grafo::marcaVisitado(int i, int valor)
     }
 }
 
-bool Grafo::checaFilhos(int pai, int procurado, queue<int> *fila, bool* jaFoi)
+bool Grafo::checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi)
 {
-    if(matrizAdj[pai][procurado]) return true;
+    if (matrizAdj[pai][procurado])
+        return true;
     jaFoi[pai] = true;
-    for(int  i = 0; i<numPalavras;i++)
+    for (int i = 0; i < numPalavras; i++)
     {
-        if(matrizAdj[pai][i] && !jaFoi[i]) fila->push(i);
+        if (matrizAdj[pai][i] && !jaFoi[i])
+            fila->push(i);
     }
     return false;
+}
+
+bool Grafo::procuraNosFilhos(int atual, int procurado, bool *visitados)
+{
+    if (visitados[atual])
+        return false;
+    if (matrizAdj[atual][procurado])
+        return true;
+    visitados[atual] = true;
+    bool achou = false;
+    for (int i = 0; i < numPalavras && !achou; i++)
+    {
+        if (!visitados[i] && matrizAdj[atual][i])
+            achou = procuraNosFilhos(i, procurado, visitados);
+    }
+
+    return achou;
 }
 
 bool checaSemLetraI(string primeira, string segunda, int i)
@@ -320,9 +380,10 @@ bool checaTrocaLetras(string a, string b, int tamanho)
             a2[j] = aux;
             /*Se for igual, existe essa aresta por esse criterio*/
             ajuda = 0;
-            for(int k =0; k<tamanho;k++)
+            for (int k = 0; k < tamanho; k++)
             {
-                if(a2[k] != b2[k]) ajuda = -1;
+                if (a2[k] != b2[k])
+                    ajuda = -1;
             }
             if (ajuda == 0)
                 return true;
