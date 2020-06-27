@@ -26,7 +26,7 @@ private:
     void marcaVisitado(int i, int valor);
     bool checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi);
     bool procuraNosFilhos(int atual, int procurado, bool *visitados);
-    bool buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool *caminho);
+    bool procuraNosFilhosGuardando(int atual, int procurado, bool *visitados, bool *caminho);
 
 public:
     Grafo(int k, string nomeArquivo)
@@ -46,6 +46,8 @@ public:
                 vetor.push_back(palavra);
             }
         }
+
+        sort(vetor.begin(), vetor.end());
         //cout << "Insira nome do arquivo base: ";
         //cin >> nomeArquivo;
         /*Conta numero de palavras e aloca matriz de adjacencias*/
@@ -173,7 +175,20 @@ public:
     {
         /* Retorna o tamanha da componente conexa onde está a palavra
         ou -1 caso ela não se encontre no grafo */
-        /*TODO*/
+        auto it = find(vetor.begin(), vetor.end(), palavra);
+        if (it == vetor.end())
+            return -1;
+
+        int index = distance(vetor.begin(), it);
+        int total = 0;
+        /*Garante que o vetor c esta completo*/
+        componentes();
+        for (int i = 0; i < numPalavras; i++)
+        {
+            if (c[i] == c[index])
+                total++;
+        }
+        return total;
     }
 
     int dist(string a, string b)
@@ -282,25 +297,26 @@ public:
     {
         /* Retorna verdadeiro casa exista um ciclo que contenha ambas as palavras,
         falso caso contrário */
-        /*
         if (dist(a, b) == -1)
             return false;
 
         int i1, i2;
-        String aux1 = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(aux1, a.c_str());
-        i1 = tabela->rank(aux1);
-        if (i1 == -1)
+        auto it = find(vetor.begin(), vetor.end(), a);
+        if (it == vetor.end())
             return false;
+        else
+        {
+            i1 = distance(vetor.begin(), it);
+        }
 
-        String aux2 = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(aux2, b.c_str());
-        i2 = tabela->rank(aux2);
-        if (i2 == -1)
+        it = find(vetor.begin(), vetor.end(), b);
+        if (it == vetor.end())
             return false;
-
-        free(aux1);
-        free(aux2);
+        else
+        {
+            i2 = distance(vetor.begin(), it);
+        }
+        /*i1 e i2 sao os indices de a e b*/
 
         bool jaFoi[numPalavras];
         bool caminho[numPalavras];
@@ -309,30 +325,16 @@ public:
             jaFoi[i] = false;
             caminho[i] = false;
         }
-
-        bool acabou = false;
-        queue<int> *fila = new queue<int>;
-        int iatual = i1;
-        buscaLargura(iatual, i2, fila, jaFoi);
-        while (!acabou)
+        bool achouIda;
+        achouIda = procuraNosFilhosGuardando(i1, i2, jaFoi, caminho);
+        if(!achouIda) return false;
+        
+        for (int i = 0; i < numPalavras; i++)
         {
-            fila->push(-1);
-            while ((iatual = fila->front()) != -1)
-            {
-                fila->pop();
-                if (buscaLargura(iatual, i2, fila, jaFoi, caminho))
-                    acabou = true;
-            }
-            fila->pop();
-            if (fila->empty())
-            {
-                acabou = true;
-            }
+            jaFoi[i] = false;
         }
-
-        while (!fila->empty())
-            fila->pop();
-            */
+        
+        return procuraNosFilhosGuardando(i2, i1, jaFoi, caminho);
     }
 };
 
@@ -406,20 +408,26 @@ bool Grafo::procuraNosFilhos(int atual, int procurado, bool *visitados)
     return achou;
 }
 
-bool Grafo::buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool *caminho)
+bool Grafo::procuraNosFilhosGuardando(int atual, int procurado, bool *visitados, bool *caminho)
 {
-    if (matrizAdj[pai][procurado])
-    {
-        jaFoi[pai] = true;
+    if (visitados[atual] || caminho[atual])
+        return false;
+    if (matrizAdj[atual][procurado])
         return true;
-    }
-    jaFoi[pai] = true;
-    for (int i = 0; i < numPalavras; i++)
+    visitados[atual] = true;
+    bool achou = false;
+    for (int i = 0; i < numPalavras && !achou; i++)
     {
-        if (matrizAdj[pai][i] && !jaFoi[i])
-            fila->push(i);
+        if (!visitados[i] && matrizAdj[atual][i])
+            achou = procuraNosFilhosGuardando(i, procurado, visitados, caminho);
+
+        if (achou)
+        {
+            caminho[i] = true;
+        }
     }
-    return false;
+
+    return achou;
 }
 
 bool checaSemLetraI(string primeira, string segunda, int i)

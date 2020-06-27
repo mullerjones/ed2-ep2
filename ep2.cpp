@@ -23,6 +23,8 @@ int main(int argc, char** argv)
     if(grafo->dist(pata, tapa) == -1) printf("nao tem aresta onde era pra ter\n");
     if(grafo->emCiclo(pato)) printf("achou ciclo do pato\n");
     if(!grafo->emCiclo(pezinho)) printf("viu que pezinho nao tem ciclo\n");
+    if(grafo->emCiclo(pato, mato)) printf("achou o ciclo com pato e mato\n");
+    if(!grafo->emCiclo(pato, cachorro)) printf("viu que pato nao tem ciclo com cachorro\n");
     printf("%d\n", grafo->dist(mato, tapa));
     
     printf("teste/n");
