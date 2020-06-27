@@ -23,6 +23,7 @@ private:
     void marcaVisitado(int i, int valor);
     bool checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi);
     bool procuraNosFilhos(int atual, int procurado, bool *visitados);
+    bool buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool* caminho);
 
 public:
     Grafo(int k, string nomeArquivo)
@@ -189,6 +190,9 @@ public:
             return -1;
         if (matrizAdj[i1][i2])
             return 1;
+
+        free(aux1);
+        free(aux2);
         /*A distancia sera calculada realizando uma busca em largura*/
         /*Utilizarei uma fila para marcar o proximo indice a ser procurado*/
         int dist = 1;
@@ -219,8 +223,6 @@ public:
             }
         }
 
-        free(aux1);
-        free(aux2);
         while (!fila->empty())
             fila->pop();
         delete fila;
@@ -272,7 +274,60 @@ public:
     {
         /* Retorna verdadeiro casa exista um ciclo que contenha ambas as palavras,
         falso caso contrário */
+        /*
+        if (dist(a, b) == -1)
+            return false;
+
+        int i1, i2;
+        String aux1 = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(aux1, a.c_str());
+        i1 = tabela->rank(aux1);
+        if (i1 == -1)
+            return false;
+
+        String aux2 = (String)malloc(40 * sizeof(char) + 5);
+        strcpy(aux2, b.c_str());
+        i2 = tabela->rank(aux2);
+        if (i2 == -1)
+            return false;
+
+        free(aux1);
+        free(aux2);
+
+        bool jaFoi[numPalavras];
+        bool caminho[numPalavras];
+        for (int i = 0; i < numPalavras; i++)
+        {
+            jaFoi[i] = false;
+            caminho[i] = false;
+        }
+
+        bool acabou = false;
+        queue<int> *fila = new queue<int>;
+        int iatual = i1;
+        buscaLargura(iatual, i2, fila, jaFoi);
+        while (!acabou)
+        {
+            fila->push(-1);
+            while ((iatual = fila->front()) != -1)
+            {
+                fila->pop();
+                if (buscaLargura(iatual, i2, fila, jaFoi, caminho))
+                    acabou = true;
+            }
+            fila->pop();
+            if (fila->empty())
+            {
+                acabou = true;
+            }
+        }
+
+        while (!fila->empty())
+            fila->pop();
+            */
     }
+
+
 };
 
 bool Grafo::checaAresta(int i, int j)
@@ -343,6 +398,22 @@ bool Grafo::procuraNosFilhos(int atual, int procurado, bool *visitados)
     }
 
     return achou;
+}
+
+bool Grafo::buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool* caminho)
+{
+    if (matrizAdj[pai][procurado])
+    {
+        jaFoi[pai] = true;
+        return true;
+    }
+    jaFoi[pai] = true;
+    for (int i = 0; i < numPalavras; i++)
+    {
+        if (matrizAdj[pai][i] && !jaFoi[i])
+            fila->push(i);
+    }
+    return false;
 }
 
 bool checaSemLetraI(string primeira, string segunda, int i)
