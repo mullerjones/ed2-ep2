@@ -16,10 +16,13 @@ int main(int argc, char** argv)
     string mato = "mato";
     string pata = "pata";
     string tapa = "tapa";
+    string pezinho = "pezinho";
     if(grafo->dist(pato, mato) == 1) printf("pato e mato certo\n");
     if(grafo->dist(mato, pata) == 2) printf("mato e pata certo\n");
     if(grafo->dist(pato, cachorro) == -1) printf("pato e cachorro certo\n");
     if(grafo->dist(pata, tapa) == -1) printf("nao tem aresta onde era pra ter\n");
+    if(grafo->emCiclo(pato)) printf("achou ciclo do pato\n");
+    if(!grafo->emCiclo(pezinho)) printf("viu que pezinho nao tem ciclo\n");
     printf("%d\n", grafo->dist(mato, tapa));
     
     printf("teste/n");

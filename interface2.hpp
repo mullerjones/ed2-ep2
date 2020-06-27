@@ -1,7 +1,10 @@
 #include <string>
 #include <string.h>
 #include <queue>
-#include "vetorord.hpp"
+#include <vector>
+#include <algorithm>
+#include <fstream>
+//#include "vetorord.hpp"
 using namespace std;
 
 bool checaSemLetraI(string primeira, string segunda, int i);
@@ -13,7 +16,7 @@ class Grafo
 {
 
 private:
-    vetorOrd *tabela;
+    vector<string> vetor;
     bool **matrizAdj;
     int numPalavras;
     int numArestas;
@@ -23,7 +26,7 @@ private:
     void marcaVisitado(int i, int valor);
     bool checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi);
     bool procuraNosFilhos(int atual, int procurado, bool *visitados);
-    bool buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool* caminho);
+    bool buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool *caminho);
 
 public:
     Grafo(int k, string nomeArquivo)
@@ -32,12 +35,21 @@ public:
         /*Le arquivo e monta tabela de simbolos*/
         int i, j;
         parametro = k;
-        //string nomeArquivo;
+
+        ifstream arqTexto;
+        string palavra;
+        arqTexto.open(nomeArquivo);
+        while (arqTexto >> palavra)
+        {
+            if (palavra.length() >= k)
+            {
+                vetor.push_back(palavra);
+            }
+        }
         //cout << "Insira nome do arquivo base: ";
         //cin >> nomeArquivo;
-        tabela = new vetorOrd(nomeArquivo, k);
         /*Conta numero de palavras e aloca matriz de adjacencias*/
-        numPalavras = tabela->quantosTem();
+        numPalavras = vetor.size();
         numArestas = 0;
         matrizAdj = (bool **)malloc(numPalavras * sizeof(bool *));
         for (i = 0; i < numPalavras; i++)
@@ -73,7 +85,7 @@ public:
             delete matrizAdj[i];
         }
         delete matrizAdj;
-        delete tabela;
+        vetor.clear();
     }
 
     int insere(string palavra)
@@ -82,15 +94,18 @@ public:
         retorna -1 se a palavra já está no grafo ou tem tamanho menor que k*/
         if (palavra.length() < parametro)
             return -1;
-        String test = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(test, palavra.c_str());
-        if (*tabela->devolve(test) == -1)
-            return -1;
+
+        if (vetor.empty())
+        {
+            vetor.push_back(palavra);
+        }
+        else
+        {
+            auto itPos = upper_bound(vetor.begin(), vetor.end(), palavra);
+            vetor.insert(itPos, palavra);
+        }
 
         int numArestasAntes = numArestas;
-        int *aux = new int;
-        *aux = 1;
-        tabela->insere(test, aux);
         numPalavras++;
         int novoNum = 0;
         for (int i = 0; i < numPalavras; i++)
@@ -158,18 +173,7 @@ public:
     {
         /* Retorna o tamanha da componente conexa onde está a palavra
         ou -1 caso ela não se encontre no grafo */
-        int valor;
-        String test = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(test, palavra.c_str());
-        valor = *tabela->devolve(test);
-        if (valor == -1)
-            return -1;
-        else
-        {
-            /*calcula tamanho da comp*/
-            /*TODO*/
-        }
-        free(test);
+        /*TODO*/
     }
 
     int dist(string a, string b)
@@ -177,22 +181,26 @@ public:
         /* Retorna a menor distância entre as palavras a e b ou -1
         caso elas estejam desconexas ou não estejam no grafo */
         int i1, i2;
-        String aux1 = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(aux1, a.c_str());
-        i1 = tabela->rank(aux1);
-        if (i1 == -1)
+        auto it = find(vetor.begin(), vetor.end(), a);
+        if (it == vetor.end())
             return -1;
+        else
+        {
+            i1 = distance(vetor.begin(), it);
+        }
 
-        String aux2 = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(aux2, b.c_str());
-        i2 = tabela->rank(aux2);
-        if (i2 == -1)
+        it = find(vetor.begin(), vetor.end(), b);
+
+        if (it == vetor.end())
             return -1;
+        else
+        {
+            i2 = distance(vetor.begin(), it);
+        }
+
         if (matrizAdj[i1][i2])
             return 1;
 
-        free(aux1);
-        free(aux2);
         /*A distancia sera calculada realizando uma busca em largura*/
         /*Utilizarei uma fila para marcar o proximo indice a ser procurado*/
         int dist = 1;
@@ -234,10 +242,10 @@ public:
     {
         /* Retorna verdadeiro casa a palavra esteja em algum ciclo,
         falso caso contrário */
-        String aux = (String)malloc(40 * sizeof(char) + 5);
-        strcpy(aux, a.c_str());
-        int index = tabela->rank(aux);
-        free(aux);
+        auto it = find(vetor.begin(), vetor.end(), a);
+        int index;
+        if (it != vetor.end())
+            index = distance(vetor.begin(), it);
 
         bool jaVisitou[numPalavras];
         for (int i = 0; i < numPalavras; i++)
@@ -326,15 +334,13 @@ public:
             fila->pop();
             */
     }
-
-
 };
 
 bool Grafo::checaAresta(int i, int j)
 {
     /*Checa cada possibilidade de criterio para existencia de aresta*/
-    string a = tabela->seleciona(i);
-    string b = tabela->seleciona(j);
+    string a = vetor.at(i);
+    string b = vetor.at(j);
     bool aux = false;
     aux = checaTrocarUmaLetra(a, b, a.length());
     if (!aux)
@@ -400,7 +406,7 @@ bool Grafo::procuraNosFilhos(int atual, int procurado, bool *visitados)
     return achou;
 }
 
-bool Grafo::buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool* caminho)
+bool Grafo::buscaLargura(int pai, int procurado, queue<int> *fila, bool *jaFoi, bool *caminho)
 {
     if (matrizAdj[pai][procurado])
     {
