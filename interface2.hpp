@@ -103,8 +103,12 @@ public:
         }
         else
         {
-            auto itPos = upper_bound(vetor.begin(), vetor.end(), palavra);
-            vetor.insert(itPos, palavra);
+            auto it = find(vetor.begin(), vetor.end(), palavra);
+            if (it == vetor.end()) /*Adiciona a palavra apenas se ela ainda nao esta no grafo*/
+            {
+                auto itPos = upper_bound(vetor.begin(), vetor.end(), palavra);
+                vetor.insert(itPos, palavra);
+            }
         }
 
         int numArestasAntes = numArestas;
@@ -327,13 +331,14 @@ public:
         }
         bool achouIda;
         achouIda = procuraNosFilhosGuardando(i1, i2, jaFoi, caminho);
-        if(!achouIda) return false;
-        
+        if (!achouIda)
+            return false;
+
         for (int i = 0; i < numPalavras; i++)
         {
             jaFoi[i] = false;
         }
-        
+
         return procuraNosFilhosGuardando(i2, i1, jaFoi, caminho);
     }
 };
