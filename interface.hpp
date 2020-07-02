@@ -18,10 +18,12 @@ class Grafo
 private:
     vector<string> vetor;
     bool **matrizAdj;
+    int parametro;
+
     int numPalavras;
     int numArestas;
-    int parametro;
     int c[10000];
+
     bool checaAresta(int i, int j);
     void marcaVisitado(int i, int valor);
     bool checaFilhos(int pai, int procurado, queue<int> *fila, bool *jaFoi);
@@ -38,6 +40,8 @@ public:
 
         ifstream arqTexto;
         string palavra;
+        //cout << "Insira nome do arquivo base: ";
+        //cin >> nomeArquivo;
         arqTexto.open(nomeArquivo);
         while (arqTexto >> palavra)
         {
@@ -48,8 +52,6 @@ public:
         }
 
         sort(vetor.begin(), vetor.end());
-        //cout << "Insira nome do arquivo base: ";
-        //cin >> nomeArquivo;
         /*Conta numero de palavras e aloca matriz de adjacencias*/
         numPalavras = vetor.size();
         numArestas = 0;
@@ -84,9 +86,9 @@ public:
     {
         for (int i = 0; i < numPalavras; i++)
         {
-            delete matrizAdj[i];
+            free(matrizAdj[i]);
         }
-        delete matrizAdj;
+        free(matrizAdj);
         vetor.clear();
     }
 
@@ -137,7 +139,7 @@ public:
     int arestas()
     {
         /* Retorna o número de arestas do grafo*/
-        int total = 0;
+        /*int total = 0;
         for (int i = 0; i < numPalavras; i++)
         {
             for (int j = i + 1; j < numPalavras; j++)
@@ -146,7 +148,9 @@ public:
                     total++;
             }
         }
-        return total;
+        return total;*/
+
+        return numArestas;
     }
 
     int componentes()
@@ -186,7 +190,7 @@ public:
         int index = distance(vetor.begin(), it);
         int total = 0;
         /*Garante que o vetor c esta completo*/
-        componentes();
+        if(c[0] != 1) componentes();
         for (int i = 0; i < numPalavras; i++)
         {
             if (c[i] == c[index])
@@ -321,6 +325,7 @@ public:
             i2 = distance(vetor.begin(), it);
         }
         /*i1 e i2 sao os indices de a e b*/
+        if(c[0] == 1 && c[i1] != c[i2]) return false;
 
         bool jaFoi[numPalavras];
         bool caminho[numPalavras];

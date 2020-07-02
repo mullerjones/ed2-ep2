@@ -1,6 +1,6 @@
 #include <string>
 #include <iostream>
-#include "interface2.hpp"
+#include "interface.hpp"
 using namespace std;
 
 int main(int argc, char** argv)
@@ -16,5 +16,6 @@ int main(int argc, char** argv)
     
     printf("teste/n");
 
+    delete grafo;
     return 0;
 }
